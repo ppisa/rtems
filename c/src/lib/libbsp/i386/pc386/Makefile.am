@@ -234,6 +234,23 @@ noinst_PROGRAMS += 3c509.rel
 3c509_rel_LDFLAGS += -Wl,--undefined=ep_board
 endif
 
+if HAS_NETWORKING
+vtnet_CPPFLAGS = -D__INSIDE_RTEMS_BSD_TCPIP_STACK__
+noinst_PROGRAMS += vtnet.rel
+vtnet_rel_SOURCES = virtio/if_vtnet.c
+vtnet_rel_SOURCES += virtio/if_vtnetvar.h
+vtnet_rel_SOURCES += virtio/virtio_net.h
+vtnet_rel_SOURCES += virtio/virtio_pci.c
+vtnet_rel_SOURCES += virtio/virtio_pci.h
+vtnet_rel_SOURCES += virtio/virtqueue.c
+vtnet_rel_SOURCES += virtio/virtqueue.h
+vtnet_rel_SOURCES += virtio/virtio.c
+vtnet_rel_SOURCES += virtio/virtio.h
+vtnet_rel_SOURCES += virtio/virtio_ring.h
+vtnet_rel_CPPFLAGS = $(AM_CPPFLAGS) $(vtnet_CPPFLAGS)
+vtnet_rel_LDFLAGS = $(RTEMS_RELLDFLAGS)
+endif
+
 libbsp_a_LIBADD = ../../../libcpu/@RTEMS_CPU@/cache.rel
 libbsp_a_LIBADD += ../../../libcpu/@RTEMS_CPU@/page.rel
 libbsp_a_LIBADD += ../../../libcpu/@RTEMS_CPU@/score.rel
@@ -248,6 +265,7 @@ if HAS_NETWORKING
 libbsp_a_LIBADD += ne2000.rel
 libbsp_a_LIBADD += wd8003.rel
 libbsp_a_LIBADD += 3c509.rel
+libbsp_a_LIBADD += vtnet.rel
 endif
 
 EXTRA_DIST += HOWTO
