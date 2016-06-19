@@ -25,8 +25,10 @@ static bcm2835_get_cmdline_entries rpi_cmdline_entries;
 
 const char *rpi_cmdline_get_raw(void)
 {
+  ll_strout("rpi_cmdline_get_raw:\n");
   memset(&rpi_cmdline_entries, 0, sizeof(rpi_cmdline_entries));
   bcm2835_mailbox_get_cmdline(&rpi_cmdline_entries);
+  ll_strout("  rpi_cmdline_get_raw OK\n");
   return rpi_cmdline_entries.cmdline;
 }
 

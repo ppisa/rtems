@@ -92,6 +92,8 @@ void bsp_console_select( void )
   Console_Port_Minor = BSP_CONSOLE_UART0;
   BSPPrintkPort = BSP_CONSOLE_UART0;
 
+  ll_strout("bsp_console_select:\n");
+
   opt = rpi_cmdline_get_arg( "--console=" );
 
   if ( opt ) {
@@ -99,6 +101,7 @@ void bsp_console_select( void )
       if ( rpi_video_is_initialized() > 0 ) {
         Console_Port_Minor = BSP_CONSOLE_FB;
         BSPPrintkPort = BSP_CONSOLE_FB;
+        ll_strout("  rpi_video_is_initialized OK\n");
       }
     }
   }
@@ -110,4 +113,5 @@ void bsp_console_select( void )
   if ( !bsp_Is_Available( Console_Port_Minor ) ) {
     Console_Port_Minor = bsp_First_Available_Device();
   }
+  ll_strout("  bsp_console_select OK\n");
 }

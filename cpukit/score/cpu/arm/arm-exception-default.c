@@ -21,5 +21,18 @@
 
 void _ARM_Exception_default( CPU_Exception_frame *frame )
 {
+  char s[30];
+  ll_strout("_ARM_Exception_default\n");
+  ll_strout(" register_lr ");
+  itoa(frame->register_lr, s, 16);
+  ll_strout(s);
+  ll_strout("\n register_pc ");
+  itoa(frame->register_pc, s, 16);
+  ll_strout(s);
+  ll_strout("\n vector ");
+  itoa(frame->vector, s, 16);
+  ll_strout(s);
+  ll_strout("\n");
+
   rtems_fatal( RTEMS_FATAL_SOURCE_EXCEPTION, (rtems_fatal_code) frame );
 }

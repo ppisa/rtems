@@ -28,11 +28,26 @@
 #include <bsp/mm.h>
 #include <libcpu/arm-cp15.h>
 #include <bsp.h>
+#include <bsp/rpi-gpio.h>
+#include <bsp/usart.h>
 
+void ll_strout(char *str)
+{
+  char ch;
+  while ((ch = *(str++)) != 0) {
+    if (ch == '\n')
+      bcm2835_usart_fns.deviceWritePolled(0, '\r');
+    bcm2835_usart_fns.deviceWritePolled(0, ch);
+  }
+}
+
+volatile int continue_execution;
 
 void BSP_START_TEXT_SECTION bsp_start_hook_0(void)
 {
   uint32_t sctlr_val;
+
+  ll_strout("bsp_start_hook_0:\n");
 
   sctlr_val = arm_cp15_get_control();
 
@@ -66,13 +81,34 @@ void BSP_START_TEXT_SECTION bsp_start_hook_0(void)
 
   /* Clear Secure or Non-secure Vector Base Address Register */
   arm_cp15_set_vector_base_address(0);
+
+  /* Enable JTAG */
+  rtems_gpio_bsp_select_specific_io(0, 22, RPI_ALT_FUNC_4);
+  rtems_gpio_bsp_select_specific_io(0, 4,  RPI_ALT_FUNC_5);
+  rtems_gpio_bsp_select_specific_io(0, 27, RPI_ALT_FUNC_4);
+  rtems_gpio_bsp_select_specific_io(0, 25, RPI_ALT_FUNC_4);
+  rtems_gpio_bsp_select_specific_io(0, 23, RPI_ALT_FUNC_4);
+  rtems_gpio_bsp_select_specific_io(0, 24, RPI_ALT_FUNC_4);
+
+  if (0) {
+    ll_strout("JTAG Enabled and waiting for GDB\n");
+
+    continue_execution = 0;
+    while (!continue_execution);
+  }
+  ll_strout("  bsp_start_hook_0 OK\n");
 }
 
 void BSP_START_TEXT_SECTION bsp_start_hook_1(void)
 {
+  ll_strout("bsp_start_hook_1:\n");
   bsp_start_copy_sections();
+  ll_strout(" bsp_start_copy_sections OK\n");
   bsp_memory_management_initialize();
+  ll_strout(" bsp_memory_management_initialize OK\n");
   bsp_start_clear_bss();
+  ll_strout(" bsp_start_clear_bss OK\n");
 
   rpi_video_init();
+  ll_strout(" rpi_video_init OK\n");
 }
