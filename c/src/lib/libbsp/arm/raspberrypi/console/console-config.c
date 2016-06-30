@@ -40,6 +40,7 @@ console_tbl Console_Configuration_Ports [] = {
       .ulClock = USART0_DEFAULT_BAUD,
       .ulIntVector = BCM2835_IRQ_ID_UART
     },
+/*
     {
       .sDeviceName ="/dev/fbcons",
       .deviceType = SERIAL_CUSTOM,
@@ -47,6 +48,7 @@ console_tbl Console_Configuration_Ports [] = {
       .deviceProbe = fbcons_probe,
       .pDeviceFlow = NULL,
     },
+*/
 };
 
 #define PORT_COUNT \

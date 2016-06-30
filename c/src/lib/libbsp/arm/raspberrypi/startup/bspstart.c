@@ -25,5 +25,7 @@
 
 void bsp_start(void)
 {
-    bsp_interrupt_initialize();
+   ll_strout("bsp_start:\n");
+   bsp_interrupt_initialize();
+   ll_strout("  bsp_interrupt_initialize OK\n");
 }

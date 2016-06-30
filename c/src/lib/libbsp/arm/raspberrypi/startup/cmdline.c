@@ -25,14 +25,16 @@ static bcm2835_get_cmdline_entries rpi_cmdline_entries;
 
 const char *rpi_cmdline_get_raw(void)
 {
+  ll_strout("rpi_cmdline_get_raw:\n");
   memset(&rpi_cmdline_entries, 0, sizeof(rpi_cmdline_entries));
   bcm2835_mailbox_get_cmdline(&rpi_cmdline_entries);
+  ll_strout("  rpi_cmdline_get_raw OK\n");
   return rpi_cmdline_entries.cmdline;
 }
 
 const char *rpi_cmdline_get_cached(void)
 {
-  if (rpi_cmdline_ready <= 0) {
+  if (0 && (rpi_cmdline_ready <= 0)) {
     const char *line = rpi_cmdline_get_raw();
     strncpy(rpi_cmdline_cached, line, MAX_CMDLINE_LENGTH - 1);
     rpi_cmdline_cached[MAX_CMDLINE_LENGTH - 1] = 0;

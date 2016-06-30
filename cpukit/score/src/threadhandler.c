@@ -23,12 +23,17 @@
 #include <rtems/score/interr.h>
 #include <rtems/score/isrlevel.h>
 #include <rtems/score/userextimpl.h>
+#include <libcpu/arm-cp15.h>
+
+volatile int continue_execution = 0;
 
 void _Thread_Handler( void )
 {
   Thread_Control  *executing = _Thread_Executing;
   ISR_Level        level;
   Per_CPU_Control *cpu_self;
+
+  printk("_Thread_Handler:\n");
 
   /*
    * Some CPUs need to tinker with the call frame or registers when the
@@ -49,7 +54,14 @@ void _Thread_Handler( void )
    * inline asm here
    */
   level = executing->Start.isr_level;
+  printk(" sctlr %08x\n", arm_cp15_get_control());
+  if (0) {
+    printk(" Waiting for debugger\n");
+    while(!continue_execution);
+  }
+  printk(" _ISR_Set_level ...");
   _ISR_Set_level( level );
+  printk(" _ISR_Set_level OK\n");
 
   /*
    * Initialize the floating point context because we do not come
@@ -83,6 +95,7 @@ void _Thread_Handler( void )
    * from one to zero.  Do not use _Thread_Enable_dispatch() since there is no
    * valid thread dispatch necessary indicator in this context.
    */
+  printk(" _Thread_Do_dispatch ...\n");
   _Thread_Do_dispatch( cpu_self, level );
 
   /*
@@ -90,6 +103,7 @@ void _Thread_Handler( void )
    *  thread/task prototype. The following code supports invoking the
    *  user thread entry point using the prototype expected.
    */
+  printk(" executing->Start.Entry.adaptor ...\n");
   ( *executing->Start.Entry.adaptor )( executing );
 
   /*

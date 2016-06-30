@@ -80,8 +80,12 @@ bsp_start_vector_table_begin:
 	ldr	pc, handler_addr_prefetch
 	ldr	pc, handler_addr_abort
 
+#if 0
 	/* Program signature checked by boot loader */
 	.word	0xb8a06f58
+#else
+	ldr	pc, handler_addr_reserved
+#endif
 
 	ldr	pc, handler_addr_irq
 	ldr	pc, handler_addr_fiq
@@ -112,7 +116,7 @@ handler_addr_abort:
 
 handler_addr_reserved:
 
-	.word	_ARMV4_Exception_reserved_default
+	.word	bsp_hyp_catch_handler
 
 handler_addr_irq:
 

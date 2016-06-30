@@ -126,8 +126,12 @@ arm_cp15_start_setup_translation_table(
   uint32_t dac = ARM_CP15_DAC_DOMAIN(client_domain, ARM_CP15_DAC_CLIENT);
   size_t i;
 
+  ll_strout("arm_cp15_start_setup_translation_table:\n");
+
   arm_cp15_set_domain_access_control(dac);
+  ll_strout(" arm_cp15_set_translation_table_base ...\n");
   arm_cp15_set_translation_table_base(ttb);
+  ll_strout(" arm_cp15_set_translation_table_base OK\n");
 
   /* Initialize translation table with invalid entries */
   for (i = 0; i < ARM_MMU_TRANSLATION_TABLE_ENTRY_COUNT; ++i) {
@@ -137,6 +141,7 @@ arm_cp15_start_setup_translation_table(
   for (i = 0; i < config_count; ++i) {
     arm_cp15_start_set_translation_table_entries(ttb, &config_table [i]);
   }
+  ll_strout(" arm_cp15_start_setup_translation_table OK\n");
 }
 
 BSP_START_TEXT_SECTION static inline void
@@ -148,6 +153,8 @@ arm_cp15_start_setup_translation_table_and_enable_mmu_and_cache(
   size_t config_count
 )
 {
+  ll_strout("arm_cp15_start_setup_translation_table_and_enable_mmu_and_cache:\n");
+
   arm_cp15_start_setup_translation_table(
     ttb,
     client_domain,
@@ -155,10 +162,13 @@ arm_cp15_start_setup_translation_table_and_enable_mmu_and_cache(
     config_count
   );
 
+  ll_strout(" arm_cp15_start_setup_translation_table OK\n");
+
   /* Enable MMU and cache */
   ctrl |= ARM_CP15_CTRL_I | ARM_CP15_CTRL_C | ARM_CP15_CTRL_M;
 
   arm_cp15_set_control(ctrl);
+  ll_strout(" arm_cp15_set_control OK\n");
 }
 
 BSP_START_TEXT_SECTION static inline uint32_t

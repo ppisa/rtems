@@ -50,9 +50,12 @@ extern char WorkAreaBase[];
 
 void bsp_work_area_initialize(void)
 {
+  int res;
   uintptr_t work_base = (uintptr_t) WorkAreaBase;
   uintptr_t ram_end;
   bcm2835_get_vc_memory_entries vc_entry;
+
+  ll_strout("bsp_work_area_initialize:\n");
   /*
    * bcm2835_get_arm_memory_entries arm_entry;
    * is another alternative how to obtain usable memory size
@@ -70,8 +73,17 @@ void bsp_work_area_initialize(void)
   #endif
 
   memset( &vc_entry, 0, sizeof(vc_entry) );
-  bcm2835_mailbox_get_vc_memory( &vc_entry );
-  if (vc_entry.base != 0)
-    ram_end = ram_end > vc_entry.base? vc_entry.base: ram_end;
+  res = 0;
+  //ll_strout("  bcm2835_mailbox_get_vc_memory ...\n");
+  //res = bcm2835_mailbox_get_vc_memory( &vc_entry );
+  if (res < 0) {
+    ll_strout("  bcm2835_mailbox_get_vc_memory ERROR\n");
+
+  }
+  if (vc_entry.base != 0 && (ram_end > vc_entry.base)) {
+    ll_strout("  Reducing workarea ram_end = vc_entry.base\n");
+    ram_end = vc_entry.base;
+  }
   bsp_work_area_initialize_default( (void *) work_base, ram_end - work_base );
+  ll_strout("  bsp_work_area_initialize_default OK\n");
 }

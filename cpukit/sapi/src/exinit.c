@@ -134,17 +134,32 @@ void rtems_initialize_executive(void)
   const volatile rtems_sysinit_item *cur = RTEMS_LINKER_SET_BEGIN(_Sysinit );
   const volatile rtems_sysinit_item *end = RTEMS_LINKER_SET_END( _Sysinit );
 
+  ll_strout("rtems_initialize_executive:\n");
+
   /* Invoke the registered system initialization handlers */
   while ( cur != end ) {
+    char s[20];
+    //itoa((int)cur->handler, s, 16);
+    ll_strout(" calling ");
+    //ll_strout(s);
+    ll_strout("\n");
     ( *cur->handler )();
+    ll_strout(" call finished OK\n");
     ++cur;
   }
 
+  ll_strout(" _System_state_Set ...\n");
   _System_state_Set( SYSTEM_STATE_UP );
+  ll_strout(" _System_state_Set OK\n");
 
+  ll_strout(" _SMP_Request_start_multitasking ...\n");
   _SMP_Request_start_multitasking();
+  ll_strout(" _SMP_Request_start_multitasking OK\n");
 
+  ll_strout(" _Thread_Start_multitasking ...\n");
   _Thread_Start_multitasking();
+  ll_strout(" _Thread_Start_multitasking OK\n");
+
 
   /*******************************************************************
    *******************************************************************

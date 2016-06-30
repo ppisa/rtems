@@ -97,10 +97,27 @@ void _CPU_Context_Initialize(
   void *tls_area
 )
 {
+  unsigned cpsr_val;
   the_context->register_sp = (uint32_t) stack_area_begin + stack_area_size;
   the_context->register_lr = (uint32_t) entry_point;
   the_context->register_cpsr = ( ( new_level != 0 ) ? ARM_PSR_I : 0 )
     | arm_cpu_mode;
+
+  __asm__ volatile (
+    ARM_SWITCH_TO_ARM
+    "mrs %[cpsr_val], cpsr\n"
+    ARM_SWITCH_BACK
+    : [cpsr_val] "=r" (cpsr_val)
+  );
+
+  printk("cpsr_val = 0x%08x\n", cpsr_val);
+
+  //if ( new_level != 0 )
+    cpsr_val |= ARM_PSR_I;
+  //else
+  //  cpsr_val &= ~ARM_PSR_I;
+
+  the_context->register_cpsr = cpsr_val;
 
 #ifdef ARM_MULTILIB_HAS_THREAD_ID_REGISTER
   the_context->thread_id = (uint32_t) tls_area;

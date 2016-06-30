@@ -207,10 +207,12 @@ void bsp_interrupt_handler_default(rtems_vector_number vector)
 
 rtems_status_code bsp_interrupt_facility_initialize(void)
 {
+   ll_strout("bsp_interrupt_facility_initialize\n");
    raspberrypi_set_exception_handler(ARM_EXCEPTION_IRQ, _ARMV4_Exception_interrupt);
    BCM2835_REG(BCM2835_IRQ_DISABLE1) = 0xffffffff;
    BCM2835_REG(BCM2835_IRQ_DISABLE2) = 0xffffffff;
    BCM2835_REG(BCM2835_IRQ_DISABLE_BASIC) = 0xffffffff;
    BCM2835_REG(BCM2835_IRQ_FIQ_CTRL) = 0;
+   ll_strout("  disable IRQs OK\n");
    return RTEMS_SUCCESSFUL;
 }

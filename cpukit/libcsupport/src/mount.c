@@ -49,6 +49,8 @@ static rtems_filesystem_mount_table_entry_t *alloc_mount_table_entry(
   size_t *target_length_ptr
 )
 {
+  ll_strout("alloc_mount_table_entry:\n");
+
   const char *target = target_or_null != NULL ? target_or_null : "/";
   size_t filesystemtype_size = strlen( filesystemtype ) + 1;
   size_t source_size = source_or_null != NULL ?
@@ -57,7 +59,12 @@ static rtems_filesystem_mount_table_entry_t *alloc_mount_table_entry(
   size_t size = sizeof( rtems_filesystem_mount_table_entry_t )
     + filesystemtype_size + source_size + target_size
     + sizeof( rtems_filesystem_global_location_t );
+
+  ll_strout(" calloc OK\n");
+
   rtems_filesystem_mount_table_entry_t *mt_entry = calloc( 1, size );
+
+  ll_strout(" calloc OK\n");
 
   if ( mt_entry != NULL ) {
     rtems_filesystem_global_location_t *mt_fs_root =
@@ -185,6 +192,8 @@ int mount(
 {
   int rv = 0;
 
+  ll_strout("mount:\n");
+
   if (
     options == RTEMS_FILESYSTEM_READ_ONLY
       || options == RTEMS_FILESYSTEM_READ_WRITE
@@ -231,6 +240,16 @@ int mount(
   } else {
     errno = EINVAL;
     rv = -1;
+  }
+
+  if (rv >= 0) {
+    ll_strout(" mount OK\n");
+  } else {
+    char s[20];
+    itoa(errno, s, 10);
+    ll_strout(" mount error ");
+    ll_strout(s);
+    ll_strout("\n");
   }
 
   return rv;
