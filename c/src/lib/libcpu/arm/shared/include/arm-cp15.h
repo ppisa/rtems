@@ -1068,8 +1068,20 @@ arm_cp15_data_cache_invalidate_all_levels(void)
   uint32_t loc = arm_clidr_get_level_of_coherency(clidr);
   uint32_t level = 0;
 
+  ll_strout("arm_cp15_data_cache_invalidate_all_levels:\n");
+  ll_strout("  clidr ");
+  ll_hexout(clidr, 8);
+  ll_strout("  loc ");
+  ll_hexout(loc, 1);
+  ll_strout("\n");
+
   for (level = 0; level < loc; ++level) {
     uint32_t ctype = arm_clidr_get_cache_type(clidr, level);
+    ll_strout("  level ");
+    ll_hexout(level, 1);
+    ll_strout(" ctype ");
+    ll_hexout(ctype, 8);
+    ll_strout("\n");
 
     /* Check if this level has a data cache or unified cache */
     if (((ctype & (0x6)) == 2) || (ctype == 4)) {
@@ -1081,9 +1093,22 @@ arm_cp15_data_cache_invalidate_all_levels(void)
 
       ccsidr = arm_cp15_get_cache_size_id_for_level(level << 1);
 
+      ll_strout("  level ");
+      ll_hexout(level, 1);
+      ll_strout(" ccsidr ");
+      ll_hexout(ccsidr, 8);
+
       line_power = arm_ccsidr_get_line_power(ccsidr);
       associativity = arm_ccsidr_get_associativity(ccsidr);
       way_shift = __builtin_clz(associativity - 1);
+
+      ll_strout(" line_power ");
+      ll_hexout(line_power, 2);
+      ll_strout(" associativity ");
+      ll_hexout(associativity, 2);
+      ll_strout(" way_shift ");
+      ll_hexout(way_shift, 2);
+      ll_strout("\n");
 
       for (way = 0; way < associativity; ++way) {
         uint32_t num_sets = arm_ccsidr_get_num_sets(ccsidr);

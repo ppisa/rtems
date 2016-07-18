@@ -74,6 +74,7 @@ _CPU_cache_invalidate_data_range(
     addr_first,
     n_bytes
   );
+  arm_cp15_drain_write_buffer();
 }
 
 static inline void _CPU_cache_freeze_data(void)
@@ -183,5 +184,23 @@ static inline void _CPU_cache_disable_instruction(void)
   arm_cp15_set_control(ctrl);
   rtems_interrupt_local_enable(level);
 }
+
+/*
+STR R11, [R1] ; R11 contains a new instruction to store in program memory
+DCCMVAU R1    ; clean to PoU makes visible to instruction cache
+DSB
+ICIMVAU R1    ; ensure instruction cache and branch predictor discards stale data
+BPIMVA R1
+DSB           ; ensure completion of the invalidation
+ISB           ; ensure instruction fetch path observes new instruction cache state
+BX R1
+*/
+/*
+#define CPU_CACHE_SUPPORT_PROVIDES_INSTRUCTION_SYNC_FUNCTION 1
+void  _CPU_cache_instruction_sync_after_code_change( const void * code_addr, size_t n_bytes )
+{
+
+}
+*/
 
 #endif /* LIBBSP_ARM_ARMV467AR_BASIC_CACHE_H */

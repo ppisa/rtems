@@ -44,9 +44,9 @@ bsp_start_arm_drop_hyp_mode:
 	mcr	p15, 4, r2, c12, c0, 0
 
 	mov	r2, #0
-	mcr	p15, 4, r2, c1, c1, 0
-	mcr	p15, 4, r2, c1, c1, 2
-	mcr	p15, 4, r2, c1, c1, 3
+	mcr	p15, 4, r2, c1, c1, 0	/* HCR */
+	mcr	p15, 4, r2, c1, c1, 2	/* HCPTR  */
+	mcr	p15, 4, r2, c1, c1, 3	/* HSTR */
 /*
  * HSCTLR.TE
  * optional start of hypervisor handlers in Thumb mode

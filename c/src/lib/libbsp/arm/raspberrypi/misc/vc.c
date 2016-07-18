@@ -42,6 +42,7 @@ static inline int bcm2835_mailbox_send_read_buffer( void *buf )
 {
   raspberrypi_mailbox_write( BCM2835_MBOX_CHANNEL_PROP_AVC,
     (unsigned int) buf + BCM2835_VC_MEMORY_MAPPING );
+  RTEMS_COMPILER_MEMORY_BARRIER();
   raspberrypi_mailbox_read( BCM2835_MBOX_CHANNEL_PROP_AVC );
   return 0;
 }
@@ -56,8 +57,28 @@ static inline void bcm2835_mailbox_buffer_flush_and_invalidate(
   size_t size
 )
 {
+  RTEMS_COMPILER_MEMORY_BARRIER();
+  arm_cp15_drain_write_buffer();
+
   rtems_cache_flush_multiple_data_lines( buf, size );
   rtems_cache_invalidate_multiple_data_lines( buf, size );
+  RTEMS_COMPILER_MEMORY_BARRIER();
+  arm_cp15_drain_write_buffer();
+  RTEMS_COMPILER_MEMORY_BARRIER();
+
+  /*
+   * This is temporal workaround for missing cache meanager
+   * which works on RPi2
+   */
+  size += (uintptr_t)buf & ~63;
+  size = (size + 63) & ~63;
+  while ( size ) {
+    size -= 32;
+    arm_cp15_data_cache_clean_and_invalidate_line(buf);
+  }
+  RTEMS_COMPILER_MEMORY_BARRIER();
+  arm_cp15_drain_write_buffer();
+  RTEMS_COMPILER_MEMORY_BARRIER();
 }
 
 #define BCM2835_MBOX_VAL_LENGTH_MASK( _val_len ) \
@@ -76,15 +97,19 @@ int bcm2835_mailbox_get_display_size(
     BCM2835_MAILBOX_TAG_GET_DISPLAY_SIZE );
   bcm2835_mailbox_buffer_flush_and_invalidate( &buffer, sizeof( &buffer ) );
 
-  if ( bcm2835_mailbox_send_read_buffer( &buffer ) )
+  if ( bcm2835_mailbox_send_read_buffer( &buffer ) ) {
+    printk("bcm2835_mailbox_get_display_size FAILED -1\n");
     return -1;
+  }
 
   _entries->width = buffer.get_display_size.body.resp.width;
   _entries->height = buffer.get_display_size.body.resp.height;
 
-  if ( !bcm2835_mailbox_buffer_suceeded( &buffer.hdr ) )
+  if ( !bcm2835_mailbox_buffer_suceeded( &buffer.hdr ) ) {
+    printk("bcm2835_mailbox_get_display_size FAILED -2\n");
     return -2;
-
+  }
+  printk("bcm2835_mailbox_get_display_size %u x %u\n", _entries->width, _entries->height);
   return 0;
 }
 
@@ -104,6 +129,7 @@ int bcm2835_mailbox_init_frame_buffer(
     bcm2835_mbox_tag_get_pitch get_pitch;
     uint32_t end_tag;
   } buffer BCM2835_MBOX_BUF_ALIGN_ATTRIBUTE;
+  memset(&buffer, 0, sizeof(buffer));
   BCM2835_MBOX_INIT_BUF( &buffer );
   BCM2835_MBOX_INIT_TAG( &buffer.set_display_size,
     BCM2835_MAILBOX_TAG_SET_DISPLAY_SIZE );
@@ -135,12 +161,18 @@ int bcm2835_mailbox_init_frame_buffer(
   BCM2835_MBOX_INIT_TAG( &buffer.allocate_buffer,
     BCM2835_MAILBOX_TAG_ALLOCATE_BUFFER );
   buffer.allocate_buffer.body.req.align = 0x100;
+  buffer.allocate_buffer.tag_hdr.val_len = 4;
+  /* https://github.com/mrvn/test/blob/master/framebuffer.cc */
+  /* https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface */
+
   BCM2835_MBOX_INIT_TAG_NO_REQ( &buffer.get_pitch,
     BCM2835_MAILBOX_TAG_GET_PITCH );
   bcm2835_mailbox_buffer_flush_and_invalidate( &buffer, sizeof( &buffer ) );
 
-  if ( bcm2835_mailbox_send_read_buffer( &buffer ) )
+  if ( bcm2835_mailbox_send_read_buffer( &buffer ) ) {
+    printk("bcm2835_mailbox_init_frame_buffer FAILED -1\n");
     return -1;
+  }
 
   _entries->xres = buffer.set_display_size.body.resp.width;
   _entries->yres = buffer.set_display_size.body.resp.height;
@@ -163,11 +195,55 @@ int bcm2835_mailbox_init_frame_buffer(
   _entries->overscan_top = buffer.set_overscan.body.resp.overscan_top;
   _entries->overscan_bottom = buffer.set_overscan.body.resp.overscan_bottom;
 
-  if ( !bcm2835_mailbox_buffer_suceeded( &buffer.hdr ) )
+  if ( !bcm2835_mailbox_buffer_suceeded( &buffer.hdr ) ) {
+    printk("bcm2835_mailbox_init_frame_buffer FAILED -2\n");
     return -2;
-
+  }
+  printk("bcm2835_mailbox_init_frame_buffer OK\n");
+  bcm2835_mailbox_init_frame_buffer_1(_entries);
   return 0;
 }
+
+int bcm2835_mailbox_init_frame_buffer_1(
+  bcm2835_init_frame_buffer_entries *_entries )
+{
+  struct {
+    bcm2835_mbox_buf_hdr hdr;
+    bcm2835_mbox_tag_allocate_buffer allocate_buffer;
+    uint32_t end_tag;
+  } buffer BCM2835_MBOX_BUF_ALIGN_ATTRIBUTE;
+  memset(&buffer, 0, sizeof(buffer));
+  BCM2835_MBOX_INIT_BUF( &buffer );
+  BCM2835_MBOX_INIT_TAG( &buffer.allocate_buffer,
+    BCM2835_MAILBOX_TAG_ALLOCATE_BUFFER );
+  buffer.allocate_buffer.body.req.align = 0x100;
+  bcm2835_mailbox_buffer_flush_and_invalidate( &buffer, sizeof( &buffer ) );
+
+  if ( bcm2835_mailbox_send_read_buffer( &buffer ) ) {
+    printk("bcm2835_mailbox_init_frame_buffer_1 FAILED -1\n");
+    return -1;
+  }
+
+  printk("  frame buffer base 0x%08x\n",
+         buffer.allocate_buffer.body.resp.base);
+
+#if ( BSP_IS_RPI2 == 1 )
+  _entries->base = buffer.allocate_buffer.body.resp.base;
+  _entries->base = (uintptr_t)_entries->base & 0x3fffffff;
+#else
+  _entries->base = buffer.allocate_buffer.body.resp.base -
+                   BCM2835_VC_MEMORY_MAPPING;
+#endif
+
+  if ( !bcm2835_mailbox_buffer_suceeded( &buffer.hdr ) ) {
+    printk("bcm2835_mailbox_init_frame_buffer_1 FAILED -2\n");
+    return -2;
+  }
+  printk("bcm2835_mailbox_init_frame_buffer_1 OK\n");
+  return 0;
+}
+
+
 
 int bcm2835_mailbox_get_pitch( bcm2835_get_pitch_entries *_entries )
 {
