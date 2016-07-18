@@ -50,6 +50,7 @@ extern char WorkAreaBase[];
 
 void bsp_work_area_initialize(void)
 {
+  int res;
   uintptr_t work_base = (uintptr_t) WorkAreaBase;
   uintptr_t ram_end;
   bcm2835_get_vc_memory_entries vc_entry;
@@ -70,8 +71,14 @@ void bsp_work_area_initialize(void)
   #endif
 
   memset( &vc_entry, 0, sizeof(vc_entry) );
-  bcm2835_mailbox_get_vc_memory( &vc_entry );
-  if (vc_entry.base != 0)
+  res = bcm2835_mailbox_get_vc_memory( &vc_entry );
+  ll_strout("  bcm2835_mailbox_get_vc_memory res ");
+  ll_hexout(res, 8);
+  if (vc_entry.base != 0) {
+    ll_strout(" VC base ");
+    ll_hexout(vc_entry.base, 8);
     ram_end = ram_end > vc_entry.base? vc_entry.base: ram_end;
+  }
+  ll_strout("\n");
   bsp_work_area_initialize_default( (void *) work_base, ram_end - work_base );
 }
