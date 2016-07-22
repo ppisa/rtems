@@ -20,7 +20,7 @@
 
 #define MAX_CMDLINE_LENGTH 1024
 static int rpi_cmdline_ready = -1;
-static char rpi_cmdline_cached[MAX_CMDLINE_LENGTH] = "--console=fbcons --video=auto";
+static char rpi_cmdline_cached[MAX_CMDLINE_LENGTH] = "--off-console=fbcons --off-video=auto";
 static bcm2835_get_cmdline_entries rpi_cmdline_entries;
 
 const char *rpi_cmdline_get_raw(void)
