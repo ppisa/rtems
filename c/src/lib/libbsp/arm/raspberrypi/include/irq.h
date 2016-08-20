@@ -42,6 +42,21 @@
 #define BCM2835_IRQ_ID_GPU_TIMER_M3  3
 
 #define BCM2835_IRQ_ID_USB           9
+
+#define BCM2835_IRQ_ID_DMA_CH0       16
+#define BCM2835_IRQ_ID_DMA_CH1       17
+#define BCM2835_IRQ_ID_DMA_CH2	     18
+#define BCM2835_IRQ_ID_DMA_CH3       19
+#define BCM2835_IRQ_ID_DMA_CH4       20
+#define BCM2835_IRQ_ID_DMA_CH5       21
+#define BCM2835_IRQ_ID_DMA_CH6       22
+#define BCM2835_IRQ_ID_DMA_CH7       23
+#define BCM2835_IRQ_ID_DMA_CH8       24
+#define BCM2835_IRQ_ID_DMA_CH9       25
+#define BCM2835_IRQ_ID_DMA_CH10      26
+#define BCM2835_IRQ_ID_DMA_CH11_14   27
+#define BCM2835_IRQ_ID_DMA_SHARED    28
+
 #define BCM2835_IRQ_ID_AUX           29
 #define BCM2835_IRQ_ID_SPI_SLAVE     43
 #define BCM2835_IRQ_ID_PWA0          45
