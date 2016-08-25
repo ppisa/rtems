@@ -61,6 +61,7 @@
 
 #define BCM_PAGE_SIZE 4096
 #define BCM_PAGE_MASK ( BCM_PAGE_SIZE - 1 )
+
 /**
  * @brief Table that indicates if a channel is currently occupied.
  */
@@ -69,6 +70,8 @@ static struct bcm_dma_ch bcm_dma_ch[ BCM_DMA_CH_MAX ];
 static void rpi_dma_intr( void *arg );
 
 rtems_status_code rpi_dma_reset( int ch );
+
+RTEMS_INTERRUPT_LOCK_DEFINE( static, bcm_dma_lock, "bcm_dma_lock" );
 
 int bus_dmamap_load_buffer(
   bus_dma_segment_t segs[],
@@ -361,7 +364,9 @@ rtems_status_code rpi_dma_start(
   int        len
 )
 {
+  rtems_interrupt_lock_context lock_context;
   struct bcm_dma_cb *cb;
+  uint32_t ch_mask = 1 << ch;
 
   /* Check the channel number provided */
   if ( ch < 0 || ch >= BCM_DMA_CH_MAX )
@@ -406,6 +411,12 @@ rtems_status_code rpi_dma_start(
 
   /* Change the state of the channel */
   BCM2835_REG( BCM_DMA_CS( ch ) ) = CS_ACTIVE;
+
+  if ( ! ( BCM2835_REG( BCM_DMA_ENABLE ) & ch_mask) ) {
+    rtems_interrupt_lock_acquire(&bcm_dma_lock, &lock_context);
+    BCM2835_REG( BCM_DMA_ENABLE ) |= ch_mask;
+    rtems_interrupt_lock_release(&bcm_dma_lock, &lock_context);
+  }
 
   return RTEMS_SUCCESSFUL;
 }
@@ -504,6 +515,7 @@ int bus_dmamap_load_buffer(
 
 int rpi_dma_init( int channel )
 {
+  rtems_interrupt_lock_context lock_context;
   struct bcm_dma_ch *ch;
   void              *cb_virt;
   vm_paddr_t         cb_phys = 0;
@@ -577,6 +589,13 @@ int rpi_dma_init( int channel )
     RTEMS_INTERRUPT_UNIQUE,
     rpi_dma_intr,
     NULL );
+
+  /* reset DMA */
+  BCM2835_REG( BCM_DMA_CS( channel ) ) = CS_RESET;
+
+  rtems_interrupt_lock_acquire(&bcm_dma_lock, &lock_context);
+  BCM2835_REG( BCM_DMA_ENABLE ) |= 1 << channel;
+  rtems_interrupt_lock_release(&bcm_dma_lock, &lock_context);
 
   /* reset DMA */
   BCM2835_REG( BCM_DMA_CS( channel ) ) = CS_RESET;
