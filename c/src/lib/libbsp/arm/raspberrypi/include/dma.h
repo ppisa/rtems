@@ -195,6 +195,4 @@ int rpi_dma_init( int ch );
  */
 uint32_t rpi_dma_length( int ch );
 
-static void rpi_dma_intr( void *arg );
-
 #endif /* LIBBSP_ARM_RASPBERRYPI_DMA_H */

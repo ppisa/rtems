@@ -66,6 +66,8 @@
  */
 static struct bcm_dma_ch bcm_dma_ch[ BCM_DMA_CH_MAX ];
 
+static void rpi_dma_intr( void *arg );
+
 rtems_status_code rpi_dma_reset( int ch );
 
 int bus_dmamap_load_buffer(
@@ -219,7 +221,7 @@ rtems_status_code rpi_dma_setup_intr(
   struct bcm_dma_cb *cb;
 
   /* Check the channel number provided */
-  if ( ch < 0 || ch > -BCM_DMA_CH_MAX )
+  if ( ch < 0 || ch > BCM_DMA_CH_MAX )
     return ( RTEMS_INVALID_ID );
 
   /* Check whether the channel is in use */
@@ -516,7 +518,7 @@ int rpi_dma_init( int channel )
     return ( RTEMS_INVALID_ID );
 
   /* Check whether the channel is in use */
-  if ( !( bcm_dma_ch[ channel ].flags & BCM_DMA_CH_USED ) )
+  if ( bcm_dma_ch[ channel ].flags & BCM_DMA_CH_USED )
     return ( RTEMS_RESOURCE_IN_USE );
 
   ch = &bcm_dma_ch[ channel ];
