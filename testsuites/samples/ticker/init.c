@@ -14,6 +14,8 @@
 #define CONFIGURE_INIT
 #include "system.h"
 
+#include "experiments.c"
+
 const char rtems_test_name[] = "CLOCK TICK";
 
 /*
@@ -73,6 +75,8 @@ rtems_task Init(
 
   status = rtems_task_start( Task_id[ 3 ], Test_task, 3 );
   directive_failed( status, "start 3" ); 
+
+  experiments_run();
 
   status = rtems_task_delete( RTEMS_SELF );
   directive_failed( status, "delete" ); 
