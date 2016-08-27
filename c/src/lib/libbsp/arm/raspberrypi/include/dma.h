@@ -103,7 +103,9 @@ struct bcm_dma_ch {
   uint32_t flags;
   struct bcm_dma_cb *cb;
   uint32_t vc_cb;
-  bus_dmamap_t dma_map;
+#if 0
+  bus_dmamap_t dma_map; /* Not used for now */
+#endif
   void ( *intr_func )(
     int,
     void *

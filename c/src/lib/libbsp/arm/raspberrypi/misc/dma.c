@@ -397,6 +397,7 @@ rtems_status_code rpi_dma_start(
 
   cb->len = len;
 
+#if 0
   /* Cache coherency */
   rtems_cache_flush_multiple_data_lines(
     (void *) bcm_dma_ch[ ch ].dma_map->buffer_begin,
@@ -405,6 +406,7 @@ rtems_status_code rpi_dma_start(
   rtems_cache_invalidate_multiple_data_lines(
     (void *) bcm_dma_ch[ ch ].dma_map->buffer_begin,
     bcm_dma_ch[ ch ].dma_map->buffer_size );
+#endif
 
   /* Write the physical address of the control block into the register */
   BCM2835_REG( BCM_DMA_CBADDR( ch ) ) = bcm_dma_ch[ ch ].vc_cb;
@@ -443,6 +445,11 @@ uint32_t rpi_dma_length( int ch )
 
   return ( cb->len );
 }
+
+#if 0
+/* Not used for now, it is used when scatter-gather
+ * or vector transfers are required
+ */
 
 /* Utility function for rpi_dma_init */
 int bus_dmamap_load_buffer(
@@ -512,6 +519,7 @@ int bus_dmamap_load_buffer(
 
   return ( buflen != 0 ? 27 : 0 );
 }
+#endif
 
 int rpi_dma_init( int channel )
 {
@@ -539,24 +547,30 @@ int rpi_dma_init( int channel )
   ch->ch = channel;
   ch->flags = BCM_DMA_CH_UNMAP;
 
+#if 0
   ch->dma_map = malloc( sizeof( struct bus_dmamap ) );
 
   if ( ch->dma_map == NULL ) {
     return ENOMEM;
   }
+#endif
 
   /* Alignment = 1 , Boundary = 0 */
   cb_virt = rtems_cache_aligned_malloc(
     sizeof( struct bcm_dma_cb ) );
 
   if ( cb_virt == NULL ) {
+#if 0
     free( ch->dma_map );
+#endif
 
     return ENOMEM;
   }
 
+#if 0
   ch->dma_map->buffer_begin = cb_virt;
   ch->dma_map->buffer_size = sizeof( struct bcm_dma_cb );
+#endif
 
   memset( cb_virt, 0, sizeof( struct bcm_dma_cb ) );
 
@@ -568,6 +582,7 @@ int rpi_dma_init( int channel )
   if ( (unsigned long int) cb_virt & 0x1f )
     return RTEMS_UNSATISFIED;
 
+#if 0
   lastaddr = (vm_offset_t) 0;
   nsegs = 0;
 
@@ -578,6 +593,10 @@ int rpi_dma_init( int channel )
     rpi_dmamap_cb( &cb_phys, dm_segments, nsegs + 1, 0 );
   else
     rpi_dmamap_cb( &cb_phys, NULL, 0, error );
+
+#else
+  cb_phys = PHYS_TO_VCBUS(cb_virt);
+#endif
 
   ch->cb = cb_virt;
   ch->vc_cb = cb_phys;
