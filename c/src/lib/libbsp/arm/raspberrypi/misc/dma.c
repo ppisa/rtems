@@ -632,9 +632,13 @@ static void rpi_dma_intr( void *arg )
 
   cs = BCM2835_REG( BCM_DMA_CS( ch->ch ) );
 
+/*
+  FIXME: CS_INT corrctly reported only by channel 0 */
   if ( !( cs & ( CS_INT | CS_ERR ) ) ) {
     return;
   }
+*/
+
 
   /* Check whether the channel is in use */
   if ( !( ch->flags & BCM_DMA_CH_USED ) ) {
@@ -647,7 +651,8 @@ static void rpi_dma_intr( void *arg )
     rpi_dma_reset( ch->ch );
   }
 
-  if ( cs & CS_INT ) {
+  /* FIXME: CS_INT corrctly reported only by channel 0 */
+  /* if ( cs & CS_INT ) */ {
     /* acknowledge interrupt */
     BCM2835_REG( BCM_DMA_CS( ch->ch ) ) = CS_INT | CS_END;
 
