@@ -394,6 +394,34 @@ void test_dma_intr(int dmach, void *context)
   printk("test_dma_intr %d %p\n", dmach, context);
 }
 
+const struct {
+  const char *name;
+  int offs;
+} test_dma_print_regs_table[] = {
+  {"CS",     0x00},
+  {"CBADDR", 0x04},
+  {"INFO",   0x08},
+  {"SRC",    0x0C},
+  {"DST",    0x10},
+  {"LEN",    0x14},
+  {"STRIDE", 0x18},
+  {"CBNEXT", 0x1C},
+  {"DEBUG",  0x20},
+  {NULL, 0}
+};
+
+void test_dma_print_state(int channel)
+{
+  typeof (test_dma_print_regs_table[0]) *p;
+  unsigned long regaddr;
+
+  for (p = test_dma_print_regs_table; p->name; p++) {
+    regaddr = BCM2835_DMA_BASE + 0x100 * channel + p->offs;
+    printf("%08x: %7s 0x%08x\n", regaddr,
+           p->name, BCM2835_REG(regaddr) );
+  }
+}
+
 int experiment_test_dma(int argc, char *argv[])
 {
   int res;
@@ -401,10 +429,28 @@ int experiment_test_dma(int argc, char *argv[])
   int i;
   int reqlen = 8;
   int cmperr = 0;
+  bcm2835_set_power_state_entries powerst;
+
+
+  for (i = 0; i < 23; i++) {
+    powerst.dev_id = i;
+    res = bcm2835_mailbox_get_power_state( &powerst );
+    printk("power state res %d, domain %d, state %d\n",
+           res, powerst.dev_id, powerst.state);
+  }
+
+  if (0) {
+    printk("JTAG Enabled and waiting for GDB\n");
+
+    continue_execution = 0;
+    while (!continue_execution);
+  }
 
   printk("rpi_dma_init ...\n");
   res = rpi_dma_init(dmach);
   printk("rpi_dma_init %d\n", res);
+
+  test_dma_print_state(dmach);
 
   printk("rpi_dma_allocate ...\n");
   res = rpi_dma_allocate(dmach);
@@ -429,7 +475,12 @@ int experiment_test_dma(int argc, char *argv[])
   res = rpi_dma_start(dmach, test_dma_src, test_dma_dst, reqlen);
   printk("rpi_dma_start %d\n", res);
 
+  test_dma_print_state(dmach);
+
+  printk("waiting\n");
   rtems_task_wake_after(10);
+
+  test_dma_print_state(dmach);
 
   printf("dma test result\n");
   for ( i = 0; i < reqlen; i++) {
