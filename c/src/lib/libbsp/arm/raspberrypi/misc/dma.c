@@ -131,7 +131,7 @@ rtems_status_code rpi_dma_reset( int ch )
     BCM2835_REG( BCM_DMA_CBNEXT( ch ) ) = 0;
 
     /* Complete everything, clear interrupt */
-    BCM2835_REG( BCM_DMA_CS( ch ) ) = CS_ABORT | CS_INT | CS_END | CS_ACTIVE;
+    BCM2835_REG( BCM_DMA_CS( ch ) ) = CS_ABORT | CS_INT | CS_END;
   }
 
   /* Clear control blocks */
@@ -202,7 +202,7 @@ rtems_status_code rpi_dma_free( int ch )
 
   status_code = rtems_interrupt_handler_remove( BCM2835_IRQ_ID_DMA_CH0 + ch,
     rpi_dma_intr,
-    NULL );
+    &bcm_dma_ch[ ch ] );
 
   _Atomic_Flag_clear( &bcm_dma_ch[ ch ].dma_lock, ATOMIC_ORDER_RELEASE );
 
@@ -408,6 +408,9 @@ rtems_status_code rpi_dma_start(
     bcm_dma_ch[ ch ].dma_map->buffer_size );
 #endif
 
+  rtems_cache_flush_multiple_data_lines(bcm_dma_ch[ ch ].cb,
+                                        sizeof(*bcm_dma_ch[ ch ].cb) );
+
   /* Write the physical address of the control block into the register */
   BCM2835_REG( BCM_DMA_CBADDR( ch ) ) = bcm_dma_ch[ ch ].vc_cb;
 
@@ -607,7 +610,7 @@ int rpi_dma_init( int channel )
     "DMA copy",
     RTEMS_INTERRUPT_UNIQUE,
     rpi_dma_intr,
-    NULL );
+    ch );
 
   /* reset DMA */
   BCM2835_REG( BCM_DMA_CS( channel ) ) = CS_RESET;
