@@ -19,7 +19,7 @@
 #define BCM_DMA_CH_UNMAP 0x80000000
 
 /* Register Map (4.2.1.2) */
-#define BCM_DMA_CS( n ) ( 0x100 * ( n ) + 0x00 )
+#define BCM_DMA_CS( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x00 )
 /* Different States */
 #define         CS_ACTIVE ( 1 << 0 )
 #define         CS_END ( 1 << 1 )
@@ -33,8 +33,8 @@
 #define         CS_DISDBG ( 1 << 29 )
 #define         CS_ABORT ( 1 << 30 )
 #define         CS_RESET ( 1U << 31 )
-#define BCM_DMA_CBADDR( n ) ( 0x100 * ( n ) + 0x04 )
-#define BCM_DMA_INFO( n ) ( 0x100 * ( n ) + 0x08 )
+#define BCM_DMA_CBADDR( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x04 )
+#define BCM_DMA_INFO( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x08 )
 #define         INFO_INT_EN ( 1 << 0 )
 #define         INFO_TDMODE ( 1 << 1 )
 #define         INFO_WAIT_RESP ( 1 << 3 )
@@ -48,16 +48,16 @@
 #define         INFO_PERMAP_SHIFT ( 16 )
 #define         INFO_PERMAP_MASK ( 0x1f << INFO_PERMAP_SHIFT )
 
-#define BCM_DMA_SRC( n ) ( 0x100 * ( n ) + 0x0C )
-#define BCM_DMA_DST( n ) ( 0x100 * ( n ) + 0x10 )
-#define BCM_DMA_LEN( n ) ( 0x100 * ( n ) + 0x14 )
-#define BCM_DMA_STRIDE( n ) ( 0x100 * ( n ) + 0x18 )
-#define BCM_DMA_CBNEXT( n ) ( 0x100 * ( n ) + 0x1C )
-#define BCM_DMA_DEBUG( n ) ( 0x100 * ( n ) + 0x20 )
+#define BCM_DMA_SRC( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x0C )
+#define BCM_DMA_DST( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x10 )
+#define BCM_DMA_LEN( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x14 )
+#define BCM_DMA_STRIDE( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x18 )
+#define BCM_DMA_CBNEXT( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x1C )
+#define BCM_DMA_DEBUG( n ) ( BCM2835_DMA_BASE + 0x100 * ( n ) + 0x20 )
 #define         DEBUG_ERROR_MASK ( 7 )
 
-#define BCM_DMA_INT_STATUS 0xfe0
-#define BCM_DMA_ENABLE 0xff0
+#define BCM_DMA_INT_STATUS ( BCM2835_DMA_BASE + 0xfe0 )
+#define BCM_DMA_ENABLE     ( BCM2835_DMA_BASE + 0xff0 )
 
 #define BCM_PAGE_SIZE 4096
 #define BCM_PAGE_MASK ( BCM_PAGE_SIZE - 1 )

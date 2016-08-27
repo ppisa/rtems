@@ -514,6 +514,16 @@
 #define BCM2836_IRQ_SOURCE_PMU            0x00000200
 #define BCM2836_IRQ_SOURCE_LOCAL_TIMER    0x00000800
 
+/**
+ * @name DMA Registers
+ *
+ * @{
+ */
+
+#define BCM2835_DMA_BASE	(RPI_PERIPHERAL_BASE + 0x007000)
+
+/** @} */
+
 /** @} */
 
 #endif /* LIBBSP_ARM_RASPBERRYPI_RASPBERRYPI_H */
