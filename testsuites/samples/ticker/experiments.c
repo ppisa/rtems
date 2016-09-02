@@ -425,7 +425,7 @@ void test_dma_print_state(int channel)
 int experiment_test_dma(int argc, char *argv[])
 {
   int res;
-  int dmach = 0;
+  int dmach = 3;
   int i;
   int reqlen = 8;
   int cmperr = 0;

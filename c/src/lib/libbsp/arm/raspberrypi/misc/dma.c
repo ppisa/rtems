@@ -414,6 +414,9 @@ rtems_status_code rpi_dma_start(
   /* Write the physical address of the control block into the register */
   BCM2835_REG( BCM_DMA_CBADDR( ch ) ) = bcm_dma_ch[ ch ].vc_cb;
 
+  printk("rpi_dma_start ch %d cb %p vc_cb %p info 0x%08x\n", ch,
+         bcm_dma_ch[ ch ].cb, bcm_dma_ch[ ch ].vc_cb, bcm_dma_ch[ ch ].cb->info);
+
   /* Change the state of the channel */
   BCM2835_REG( BCM_DMA_CS( ch ) ) = CS_ACTIVE;
 
@@ -561,6 +564,7 @@ int rpi_dma_init( int channel )
   /* Alignment = 1 , Boundary = 0 */
   cb_virt = rtems_cache_aligned_malloc(
     sizeof( struct bcm_dma_cb ) );
+  printk("rpi_dma_init cb_virt %p\n");
 
   if ( cb_virt == NULL ) {
 #if 0
@@ -630,26 +634,36 @@ static void rpi_dma_intr( void *arg )
   struct bcm_dma_ch *ch = (struct bcm_dma_ch *) arg;
   uint32_t           cs, debug;
 
+  printk("rpi_dma_intr 1 ch %d %p %p\n", ch->ch, ch, ch->cb);
+
   cs = BCM2835_REG( BCM_DMA_CS( ch->ch ) );
 
+  printk("rpi_dma_intr CS 0x%08x INT_STATUS 0x%08x DMA_ENABLE 0x%08x\n", cs,
+         BCM2835_REG( BCM_DMA_INT_STATUS ), BCM2835_REG( BCM_DMA_ENABLE ));
+
 /*
-  FIXME: CS_INT corrctly reported only by channel 0 */
+  FIXME: CS_INT correctly reported only by channel 0
   if ( !( cs & ( CS_INT | CS_ERR ) ) ) {
     return;
   }
 */
 
+  printk("rpi_dma_intr 2\n");
 
   /* Check whether the channel is in use */
   if ( !( ch->flags & BCM_DMA_CH_USED ) ) {
     return;
   }
 
+  printk("rpi_dma_intr 3\n");
+
   if ( cs & CS_ERR ) {
     debug = BCM2835_REG( BCM_DMA_DEBUG( ch->ch ) );
     BCM2835_REG( BCM_DMA_DEBUG( ch->ch ) ) = debug & DEBUG_ERROR_MASK;
     rpi_dma_reset( ch->ch );
   }
+
+  printk("rpi_dma_intr 4\n");
 
   /* FIXME: CS_INT corrctly reported only by channel 0 */
   /* if ( cs & CS_INT ) */ {
@@ -662,4 +676,6 @@ static void rpi_dma_intr( void *arg )
     if ( ch->intr_func )
       ch->intr_func( ch->ch, ch->intr_arg );
   }
+
+  printk("rpi_dma_intr 5\n");
 }
