@@ -25,6 +25,7 @@
 #define LIBCPU_SHARED_ARM_CP15_H
 
 #include <rtems.h>
+#include <rtems/bspIo.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1127,6 +1128,69 @@ arm_cp15_data_cache_invalidate_all_levels(void)
     }
   }
 }
+
+ARM_CP15_TEXT_SECTION static inline void
+arm_cp15_data_cache_print_all_levels(void)
+{
+  uint32_t ct = arm_cp15_get_cache_type();
+  uint32_t format = arm_cp15_cache_type_get_format(ct);
+  uint32_t clidr = 0;
+  uint32_t loc = 0;
+  uint32_t level = 0;
+
+  printk("cache type 0x%08x\n", ct);
+
+  if (format != ARM_CP15_CACHE_TYPE_FORMAT_ARMV7) {
+    uint32_t ctype = (ct >> 25) & 0xf;
+    uint32_t line_power = ((ct >> 25) & 0x3) + 3;
+    uint32_t associativity = 1 << (((ct >> 3) & 0x7));
+    uint32_t size_power = ((ct >> 6) & 0xf) + 9;
+    uint32_t page_aliasing = (ct >> 2) & 1;
+    uint32_t size = 1 << size_power;
+    printk("cache levels:\n");
+    printk("  level 1 ctype %d size %d\n", ctype, size);
+    printk("  line_power 0x%02x associativity 0x%02x size_power 0x%02x page aliasing %d\n",
+              line_power, associativity, size_power, page_aliasing);
+    return;
+  }
+
+  clidr = arm_cp15_get_cache_level_id();
+  loc = arm_clidr_get_level_of_coherency(clidr);
+
+  printk("cache levels:\n");
+  printk("  clidr 0x%08x loc %d\n", clidr, loc);
+
+  for (level = 0; level < loc; ++level) {
+    uint32_t ctype = arm_clidr_get_cache_type(clidr, level);
+
+    printk("  level %d ctype %d\n", level, ctype);
+
+    /* Check if this level has a data cache or unified cache */
+    if (((ctype & (0x6)) == 2) || (ctype == 4)) {
+      uint32_t ccsidr;
+      uint32_t line_power;
+      uint32_t associativity;
+      uint32_t way;
+      uint32_t way_shift;
+      uint32_t size;
+      uint32_t num_sets;
+
+      ccsidr = arm_cp15_get_cache_size_id_for_level(level << 1);
+
+      line_power = arm_ccsidr_get_line_power(ccsidr);
+      associativity = arm_ccsidr_get_associativity(ccsidr);
+      way_shift = __builtin_clz(associativity - 1);
+      num_sets = arm_ccsidr_get_num_sets(ccsidr);
+
+      size = (1 << line_power) * associativity * num_sets;
+
+      printk("  level %d ccsidr 0x%08x size %d\n", level, ccsidr, size);
+      printk("  line_power 0x%02x associativity 0x%02x way_shift 0x%02x\n",
+              line_power, associativity, way_shift);
+    }
+  }
+}
+
 
 ARM_CP15_TEXT_SECTION static inline void
 arm_cp15_data_cache_clean_line(const void *mva)
