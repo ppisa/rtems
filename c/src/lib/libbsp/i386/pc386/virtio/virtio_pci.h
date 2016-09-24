@@ -72,7 +72,9 @@ struct vtpci_softc {
 	int unit_number;
 	char *unit_name;
 
-	int pci_signature;
+	unsigned char pci_bus;		/* RTEMS PCI bus number */
+	unsigned char pci_dev;		/* RTEMS PCI slot/device number */
+	unsigned char pci_fun;		/* RTEMS PCI function number */
 	uint32_t pci_io_base;
 	rtems_id daemonTid;
 #endif

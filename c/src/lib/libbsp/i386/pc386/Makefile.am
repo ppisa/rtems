@@ -249,6 +249,7 @@ vtnet_rel_SOURCES += virtio/virtio.h
 vtnet_rel_SOURCES += virtio/virtio_ring.h
 vtnet_rel_CPPFLAGS = $(AM_CPPFLAGS) $(vtnet_CPPFLAGS)
 vtnet_rel_LDFLAGS = $(RTEMS_RELLDFLAGS)
+vtnet_rel_LDFLAGS += -Wl,--undefined=rtems_vtnet_driver_attach
 endif
 
 libbsp_a_LIBADD = ../../../libcpu/@RTEMS_CPU@/cache.rel

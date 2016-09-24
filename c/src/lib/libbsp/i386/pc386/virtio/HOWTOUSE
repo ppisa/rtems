@@ -30,7 +30,7 @@ example of network configuration is as follows.
 	extern int rtems_vtnet_driver_attach(struct rtems_bsdnet_ifconfig *, int)
 	static struct rtems_bsdnet_ifconfig virtio_config[]={
 	  {
-	  "vio1", rtems_vtnet_driver_attach, NULL,
+	  "vio0", rtems_vtnet_driver_attach, NULL,
 	  },
 	};
 	struct rtems_bsdnet_config rtems_bsdnet_config = {

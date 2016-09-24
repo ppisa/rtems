@@ -57,7 +57,7 @@
 #include <sys/mbuf.h>
 #include <sys/param.h>
 
-#include <pcibios.h>
+#include <rtems/pci.h>
 
 #include "virtio.h"
 #include "virtqueue.h"
@@ -65,6 +65,32 @@
 
 #ifdef RTEMS_VIRTIO_NET
 /* Some adaptation replacements for RTEMS */
+
+#define VIRTIO_PCI_CONF_ACCESSOR(_confop, _baseop, _type) \
+  \
+  static inline int _confop ( \
+    struct vtpci_softc *sc, \
+    int offset, \
+    _type data ) \
+  { \
+    _baseop( \
+        sc->pci_bus, \
+        sc->pci_dev, \
+        sc->pci_fun, \
+        offset, \
+        data \
+    ); \
+   return PCIB_ERR_SUCCESS; \
+  }
+
+VIRTIO_PCI_CONF_ACCESSOR( virtio_pci_conf_read8,   pci_read_config_byte,   uint8_t * );
+VIRTIO_PCI_CONF_ACCESSOR( virtio_pci_conf_read16,  pci_read_config_word,   uint16_t * );
+VIRTIO_PCI_CONF_ACCESSOR( virtio_pci_conf_read32,  pci_read_config_dword,  uint32_t * );
+VIRTIO_PCI_CONF_ACCESSOR( virtio_pci_conf_write8,  pci_write_config_byte,  uint8_t );
+VIRTIO_PCI_CONF_ACCESSOR( virtio_pci_conf_write16, pci_write_config_word,  uint16_t );
+VIRTIO_PCI_CONF_ACCESSOR( virtio_pci_conf_write32, pci_write_config_dword, uint32_t );
+
+
 
 static struct vtpci_softc vtpci_softc;
 #define device_get_softc(dev) &vtpci_softc
@@ -77,6 +103,7 @@ static uint8_t vtpci_read_config_1(struct vtpci_softc *sc, int offset){
 static uint16_t vtpci_read_config_2(struct vtpci_softc *sc, int offset){
 	uint16_t val;
 	inport_word(sc->pci_io_base+offset, val);
+	printf("vtpci_read_config_2 %p + %d val %d\n", sc->pci_io_base, offset, val);
 	return val;
 }
 static uint32_t vtpci_read_config_4(struct vtpci_softc *sc, int offset){
@@ -340,16 +367,26 @@ int rtems_vtpci_attach(
 	for ( i = VIRTIO_PCI_DEVICEID_MIN; i < VIRTIO_PCI_DEVICEID_MAX; i++ ) {
 		ret = pci_find_device( VIRTIO_PCI_VENDORID, i, sc->unit_number,
 		&pbus, &pdev, &pfun );
+		printf("pci_find_device 0x%04x %d %d pbus %d pdev %d pfun %d ret %d\n", VIRTIO_PCI_VENDORID, i, sc->unit_number,
+                       pbus, pdev, pfun, ret);
 
 		if ( ret == PCIB_ERR_SUCCESS ) {
-			sc->pci_signature = PCIB_DEVSIG_MAKE( pbus, pdev, pfun );
+			sc->pci_bus = pbus;
+			sc->pci_dev = pdev;
+			sc->pci_fun = pfun;
 			break;
 		}
 	}
 	}
 
+	if ( i == VIRTIO_PCI_DEVICEID_MAX ) {
+		device_printf(dev, "Device matching VID 0x%04x not found\n", VIRTIO_PCI_VENDORID);
+		error = ENOMEM;
+		return (error);
+	}
+
 	/* Get IO Address */
-	pcib_conf_read32( sc->pci_signature, PCI_BASE_ADDRESS_0, &val32 );
+	virtio_pci_conf_read32( sc, PCI_BASE_ADDRESS_0, &val32 );
 	val32 &= PCI_BASE_ADDRESS_IO_MASK;
 	sc->pci_io_base = val32;
 
@@ -395,9 +432,9 @@ vtpci_attach(device_t dev)
 #ifdef RTEMS_VIRTIO_NET
 	uint16_t val16;
 
-	pcib_conf_read16( sc->pci_signature, PCI_COMMAND, &val16 );
+	virtio_pci_conf_read16( sc, PCI_COMMAND, &val16 );
 	val16 |= PCI_COMMAND_MASTER;
-	pcib_conf_write16( sc->pci_signature, PCI_COMMAND, val16 );
+	virtio_pci_conf_write16( sc, PCI_COMMAND, val16 );
 #endif
 
 	vtpci_reset(sc);
@@ -622,6 +659,8 @@ vtpci_alloc_virtqueues(device_t dev, int flags, int nvqs,
 
 		vtpci_select_virtqueue(sc, idx);
 		size = vtpci_read_config_2(sc, VIRTIO_PCI_QUEUE_NUM);
+
+		printf("vq idx %d info %p size %d\n", idx, info, size);
 
 		error = virtqueue_alloc(dev, idx, size, VIRTIO_PCI_VRING_ALIGN,
 		    0xFFFFFFFFUL, info, &vq);
@@ -1041,7 +1080,7 @@ vtpci_alloc_interrupt(struct vtpci_softc *sc, int rid, int flags,
 #endif
 #ifdef RTEMS_VIRTIO_NET
 	uint8_t val8;
-	pcib_conf_read8( sc->pci_signature, PCI_INTERRUPT_LINE, &val8 );
+	virtio_pci_conf_read8( sc, PCI_INTERRUPT_LINE, &val8 );
 	intr->isr_number = val8;
 #endif
 
