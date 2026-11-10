@@ -73,6 +73,7 @@ source:
 - bsps/i386/shared/irq/irq_init.c
 - bsps/i386/shared/pci/pci_io.c
 - bsps/i386/shared/pci/pcibios.c
+- bsps/shared/dev/can/ctucanfd/ctucanfd_pci.c
 - bsps/shared/dev/can/sja1000/sja1000_kvpcican.c
 - bsps/shared/dev/getentropy/getentropy-cpucounter.c
 - bsps/shared/dev/pci/pci_bus_count.c
