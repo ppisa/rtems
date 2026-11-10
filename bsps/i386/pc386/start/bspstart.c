@@ -131,3 +131,13 @@ static void bsp_start_default( void )
  *  can override the actual bsp_start routine used.
  */
 void bsp_start (void) __attribute__ ((weak, alias("bsp_start_default")));
+
+#include <rtems/sysinit.h>
+
+void can_sja1000_kvpcican_probe( void );
+
+RTEMS_SYSINIT_ITEM(
+  can_sja1000_kvpcican_probe,
+  RTEMS_SYSINIT_DEVICE_DRIVERS,
+  RTEMS_SYSINIT_ORDER_MIDDLE
+);
